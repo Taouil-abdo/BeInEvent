@@ -7,6 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Event, EventStatus } from './event.schema';
 import { CreateEventDto } from './dto/create-event.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
 
 @Injectable()
 export class EventService {
@@ -55,6 +56,37 @@ export class EventService {
     event.status = EventStatus.PUBLISHED;
     await event.save();
     return event;
+  }
+
+  async cancel(id: string, userId: string) {
+    const event = await this.eventModel.findById(id).exec();
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+    if (event.createdBy.toString() !== userId) {
+      throw new ForbiddenException('You can only cancel your own events');
+    }
+    event.status = EventStatus.CANCELED;
+    await event.save();
+    return event;
+  }
+
+  async update(id: string, updateEventDto: UpdateEventDto, userId: string) {
+    const event = await this.eventModel.findById(id).exec();
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+    if (event.createdBy.toString() !== userId) {
+      throw new ForbiddenException('You can only update your own events');
+    }
+    const updateData: any = { ...updateEventDto };
+    if (updateData.date) {
+      updateData.date = new Date(updateData.date);
+    }
+    return this.eventModel
+      .findByIdAndUpdate(id, updateData, { new: true })
+      .populate('createdBy', 'name email')
+      .exec();
   }
 
   async remove(id: string, userId: string) {

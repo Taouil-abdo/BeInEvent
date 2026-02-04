@@ -42,10 +42,35 @@ export class EventController {
     return this.eventService.create(createEventDto, userId);
   }
 
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  update(
+    @Param('id') id: string,
+    @Body(ValidationPipe) updateEventDto: UpdateEventDto,
+    @GetUser('id') userId: string,
+  ) {
+    return this.eventService.update(id, updateEventDto, userId);
+  }
+
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   remove(@Param('id') id: string, @GetUser('id') userId: string) {
     return this.eventService.remove(id, userId);
+  }
+
+  @Patch(':id/publish')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  publish(@Param('id') id: string, @GetUser('id') userId: string) {
+    return this.eventService.publish(id, userId);
+  }
+
+  @Patch(':id/cancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  cancel(@Param('id') id: string, @GetUser('id') userId: string) {
+    return this.eventService.cancel(id, userId);
   }
 }
