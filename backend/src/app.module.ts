@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
+import { getDatabaseConfig } from './config/database.config';
 
 @Module({
   imports: [
@@ -10,8 +12,10 @@ import { AppService } from './app.service';
       isGlobal: true,
     }),
     MongooseModule.forRootAsync({
+      useFactory: getDatabaseConfig,
       inject: [ConfigService],
     }),
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
