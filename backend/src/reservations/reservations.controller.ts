@@ -82,7 +82,11 @@ export class ReservationsController {
     @GetUser('role') role: string,
     @Res() res: express.Response,
   ) {
-    const buffer = await this.reservationsService.generateTicketPdf( id, userId, role );
+    const buffer = await this.reservationsService.generateTicketPdf(
+      id,
+      userId,
+      role,
+    );
     res.setHeader(
       'Content-Disposition',
       `attachment; filename="ticket-${id}.pdf"`,
