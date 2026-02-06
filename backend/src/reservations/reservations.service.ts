@@ -226,9 +226,7 @@ export class ReservationsService {
       doc.text(`Email: ${participant.email}`);
 
       doc.moveDown();
-      doc
-        .fontSize(10)
-        .text('Please present this ticket at the event entrance.', {
+      doc.fontSize(10).text('Please present this ticket at the event entrance.', {
           align: 'center',
         });
 
