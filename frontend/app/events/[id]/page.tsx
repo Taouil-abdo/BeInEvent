@@ -37,8 +37,8 @@ async function getEvent(
     }
     const data = await res.json();
     return { event: data };
-  } catch (e: any) {
-    return { error: e?.message || "Error while loading event" };
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Error while loading event" };
   }
 }
 

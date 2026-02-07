@@ -73,7 +73,7 @@ export default function Header() {
                 href="/register"
                 className="rounded-xl bg-[var(--color-ink)] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
               >
-                S'inscrire
+                S&apos;inscrire
               </Link>
             </>
           )}

@@ -77,8 +77,8 @@ export default function MyReservationsPage() {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-    } catch (e: any) {
-      setError(e?.message || "Impossible de télécharger le ticket");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Impossible de télécharger le ticket");
     } finally {
       setDownloadingId(null);
     }
@@ -163,7 +163,7 @@ export default function MyReservationsPage() {
                     href={`/events/${r.event._id}`}
                     className="text-sm font-semibold text-[var(--color-ink)] underline underline-offset-4"
                   >
-                    Voir l'événement
+                    Voir l&apos;événement
                   </Link>
                 )}
                 {r.status === "CONFIRMED" && (

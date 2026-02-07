@@ -65,8 +65,8 @@ export default function ReservationActions({
       }
       setReservation(body);
       setMessage("Réservation créée");
-    } catch (e: any) {
-      setError(e?.message || "Réservation échouée");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Réservation échouée");
     } finally {
       setLoading(false);
     }
@@ -94,8 +94,8 @@ export default function ReservationActions({
       }
       setReservation(body);
       setMessage("Réservation annulée");
-    } catch (e: any) {
-      setError(e?.message || "Annulation échouée");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Annulation échouée");
     } finally {
       setLoading(false);
     }

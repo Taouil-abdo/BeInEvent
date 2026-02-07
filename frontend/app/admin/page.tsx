@@ -97,8 +97,8 @@ export default function AdminDashboardPage() {
       setDate("");
       setLocation("");
       setCapacity(10);
-    } catch (err: any) {
-      setEventsError(err.message || "Impossible de créer l'événement");
+    } catch (err: unknown) {
+      setEventsError(err instanceof Error ? err.message : "Impossible de créer l'événement");
     } finally {
       setSaving(false);
     }

@@ -33,10 +33,10 @@ async function getEvents(): Promise<{ events: EventItem[]; error?: string }> {
     }
     const data = await res.json();
     return { events: Array.isArray(data) ? data : [] };
-  } catch (e: any) {
+  } catch (e: unknown) {
     return {
       events: [],
-      error: e?.message || "Erreur lors du chargement des événements",
+      error: e instanceof Error ? e.message : "Erreur lors du chargement des événements",
     };
   }
 }
@@ -78,7 +78,7 @@ function EventsSection({
             Prochains événements
           </h2>
           <p className="mt-3 text-[var(--color-muted)]">
-            Explorez notre sélection d'événements à venir
+            Explorez notre sélection d&apos;événements à venir
           </p>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -131,7 +131,7 @@ export default async function Home() {
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/80 px-4 py-1.5 text-sm font-medium text-[var(--color-muted)]">
                   <span className="h-2 w-2 rounded-full bg-[var(--color-accent)]"></span>
-                  Plateforme de réservation d'événements
+                  Plateforme de réservation d&apos;événements
                 </div>
                 <h1 className="mt-6 text-5xl font-semibold leading-[1.05] tracking-tight text-[var(--color-ink)] sm:text-6xl" style={{ fontFamily: "var(--font-display)" }}>
                   BeInEvent
