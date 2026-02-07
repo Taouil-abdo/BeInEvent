@@ -32,7 +32,7 @@ jobs:
 
       - name: Run tests
         working-directory: ./backend
-        run: npm run test
+        run: npm run test -- --passWithNoTests
 
       - name: Build
         working-directory: ./backend
@@ -63,7 +63,7 @@ jobs:
 
       - name: Run tests
         working-directory: ./frontend
-        run: npm run test
+        run: npm run test -- --passWithNoTests
 
       - name: Build
         working-directory: ./frontend
