@@ -30,10 +30,14 @@ export class ReservationsService {
       throw new ConflictException('Event is not available for reservation');
     }
 
+    const eventId = (
+      event._id as unknown as { toString: () => string }
+    ).toString();
+
     // Check for existing active reservation for this user & event
     const existing = await this.reservationModel
       .findOne({
-        event: event._id,
+        event: eventId,
         participant: userId,
         status: {
           $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED],
@@ -49,7 +53,7 @@ export class ReservationsService {
 
     // Check capacity (count PENDING + CONFIRMED)
     const activeCount = await this.reservationModel.countDocuments({
-      event: event._id,
+      event: eventId,
       status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
     });
 
@@ -58,10 +62,10 @@ export class ReservationsService {
     }
 
     const reservation = new this.reservationModel({
-      event: event._id,
+      event: eventId,
       participant: userId,
       status: ReservationStatus.PENDING,
-    });
+    }) as Reservation;
 
     return reservation.save();
   }
@@ -177,8 +181,11 @@ export class ReservationsService {
     }
 
     // Only owner or admin can download
+    const participantDoc = reservation.participant as {
+      _id: { toString: () => string };
+    };
     if (
-      reservation.participant._id.toString() !== requesterId &&
+      participantDoc._id.toString() !== requesterId &&
       requesterRole !== 'admin'
     ) {
       throw new ForbiddenException(
@@ -196,12 +203,20 @@ export class ReservationsService {
     const chunks: Buffer[] = [];
 
     return await new Promise<Buffer>((resolve, reject) => {
-      doc.on('data', (chunk) => chunks.push(chunk as Buffer));
+      doc.on('data', (chunk) => chunks.push(chunk));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
-      doc.on('error', (err) => reject(err));
+      doc.on('error', (err: Error) => reject(err));
 
-      const event: any = reservation.event;
-      const participant: any = reservation.participant;
+      const event = reservation.event as unknown as {
+        title: string;
+        description?: string;
+        date: Date;
+        location?: string;
+      };
+      const participant = reservation.participant as unknown as {
+        name: string;
+        email: string;
+      };
 
       doc.fontSize(20).text('Event Ticket', { align: 'center' });
       doc.moveDown();
@@ -215,7 +230,7 @@ export class ReservationsService {
       if (event.description) {
         doc.text(`Description: ${event.description}`);
       }
-      doc.text(`Date: ${event.date}`);
+      doc.text(`Date: ${event.date.toISOString()}`);
       if (event.location) {
         doc.text(`Location: ${event.location}`);
       }
@@ -226,7 +241,9 @@ export class ReservationsService {
       doc.text(`Email: ${participant.email}`);
 
       doc.moveDown();
-      doc.fontSize(10).text('Please present this ticket at the event entrance.', {
+      doc
+        .fontSize(10)
+        .text('Please present this ticket at the event entrance.', {
           align: 'center',
         });
 

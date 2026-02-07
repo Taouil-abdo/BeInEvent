@@ -6,6 +6,15 @@ import { AppModule } from './../src/app.module';
 
 describe('E2E - Auth + Events + Reservations', () => {
   let app: INestApplication<App>;
+  type AuthResponse = {
+    access_token: string;
+  };
+  type EventResponse = {
+    _id: string;
+  };
+  type ReservationResponse = {
+    _id: string;
+  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -33,7 +42,7 @@ describe('E2E - Auth + Events + Reservations', () => {
       })
       .expect(201);
 
-    const adminToken = adminReg.body.access_token;
+    const adminToken = (adminReg.body as AuthResponse).access_token;
 
     // Register participant
     const participantReg = await request(app.getHttpServer())
@@ -46,7 +55,7 @@ describe('E2E - Auth + Events + Reservations', () => {
       })
       .expect(201);
 
-    const participantToken = participantReg.body.access_token;
+    const participantToken = (participantReg.body as AuthResponse).access_token;
 
     // Admin creates event
     const createEvent = await request(app.getHttpServer())
@@ -61,7 +70,7 @@ describe('E2E - Auth + Events + Reservations', () => {
       })
       .expect(201);
 
-    const eventId = createEvent.body._id;
+    const eventId = (createEvent.body as EventResponse)._id;
 
     // Admin publishes event
     await request(app.getHttpServer())
@@ -76,7 +85,7 @@ describe('E2E - Auth + Events + Reservations', () => {
       .send({ eventId })
       .expect(201);
 
-    const reservationId = reservation.body._id;
+    const reservationId = (reservation.body as ReservationResponse)._id;
 
     // Admin confirms reservation
     await request(app.getHttpServer())

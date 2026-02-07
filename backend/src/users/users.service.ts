@@ -29,7 +29,8 @@ export class UsersService {
     }
     user.role = dto.role;
     await user.save();
-    const { password, ...rest } = user.toObject();
+    const { password: _password, ...rest } = user.toObject();
+    void _password;
     return rest;
   }
 
@@ -40,7 +41,8 @@ export class UsersService {
     }
     user.isActive = false;
     await user.save();
-    const { password, ...rest } = user.toObject();
+    const { password: _password, ...rest } = user.toObject();
+    void _password;
     return rest;
   }
 
@@ -51,7 +53,8 @@ export class UsersService {
     }
     user.isActive = true;
     await user.save();
-    const { password, ...rest } = user.toObject();
+    const { password: _password, ...rest } = user.toObject();
+    void _password;
     return rest;
   }
 
@@ -60,7 +63,8 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    const { password, ...rest } = user.toObject();
+    const { password: _password, ...rest } = user.toObject();
+    void _password;
     return rest;
   }
 }

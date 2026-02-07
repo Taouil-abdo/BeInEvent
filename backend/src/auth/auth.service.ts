@@ -52,7 +52,8 @@ export class AuthService {
   }
 
   async refreshToken(refreshTokenDto: RefreshTokenDto) {
-    const refreshTokenDoc = await this.refreshTokenModel.findOne({
+    const refreshTokenDoc = await this.refreshTokenModel
+      .findOne({
         token: refreshTokenDto.refreshToken,
         isRevoked: false,
         expiresAt: { $gt: new Date() },
@@ -68,32 +69,39 @@ export class AuthService {
     await refreshTokenDoc.save();
 
     // Generate new tokens
-    const user = refreshTokenDoc.userId as any;
+    const user = refreshTokenDoc.userId as unknown as User;
     return this.generateTokens(user);
   }
 
   async logout(refreshToken: string) {
     await this.refreshTokenModel.updateOne(
       { token: refreshToken },
-      { isRevoked: true }
+      { isRevoked: true },
     );
   }
 
   private async generateTokens(user: User) {
-    const payload = { email: user.email, sub: user._id, role: user.role };
+    const userId = (
+      user._id as unknown as { toString: () => string }
+    ).toString();
+    const payload = {
+      email: user.email,
+      sub: userId,
+      role: user.role,
+    };
     const accessExpiresIn = this.configService.get<string>(
       'JWT_ACCESS_EXPIRES_IN',
       '15m',
     );
 
     const accessToken = this.jwtService.sign(payload, {
-      expiresIn: accessExpiresIn
+      expiresIn: accessExpiresIn,
     });
     const refreshToken = crypto.randomBytes(32).toString('hex');
 
     // Save refresh token to database
     const refreshTokenDoc = new this.refreshTokenModel({
-      userId: user._id,
+      userId: userId,
       token: refreshToken,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     });
@@ -103,7 +111,7 @@ export class AuthService {
       access_token: accessToken,
       refresh_token: refreshToken,
       user: {
-        id: user._id ,
+        id: userId,
         name: user.name,
         email: user.email,
         role: user.role,

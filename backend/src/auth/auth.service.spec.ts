@@ -2,30 +2,32 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import {
-  ConflictException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { AuthService } from './auth.service';
 import { User } from '../users/user.schema';
 import { RefreshToken } from './refresh-token.schema';
+import { Model } from 'mongoose';
 
 describe('AuthService', () => {
   let service: AuthService;
 
   const userSaveMock = jest.fn();
-  const userModelMock: any = jest.fn().mockImplementation(() => ({
+  const userModelMock = Object.assign(jest.fn(), {
+    findOne: jest.fn(),
+  }) as unknown as jest.Mocked<Model<User>>;
+  (userModelMock as unknown as jest.Mock).mockImplementation(() => ({
     save: userSaveMock,
   }));
-  userModelMock.findOne = jest.fn();
 
   const refreshSaveMock = jest.fn();
-  const refreshTokenModelMock: any = jest.fn().mockImplementation(() => ({
+  const refreshTokenModelMock = Object.assign(jest.fn(), {
+    findOne: jest.fn(),
+    updateOne: jest.fn(),
+  }) as unknown as jest.Mocked<Model<RefreshToken>>;
+  (refreshTokenModelMock as unknown as jest.Mock).mockImplementation(() => ({
     save: refreshSaveMock,
   }));
-  refreshTokenModelMock.findOne = jest.fn();
-  refreshTokenModelMock.updateOne = jest.fn();
 
   const jwtServiceMock = {
     sign: jest.fn().mockReturnValue('access-token'),
@@ -40,7 +42,10 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         { provide: getModelToken(User.name), useValue: userModelMock },
-        { provide: getModelToken(RefreshToken.name), useValue: refreshTokenModelMock },
+        {
+          provide: getModelToken(RefreshToken.name),
+          useValue: refreshTokenModelMock,
+        },
         { provide: JwtService, useValue: jwtServiceMock },
         { provide: ConfigService, useValue: configServiceMock },
       ],
@@ -50,7 +55,7 @@ describe('AuthService', () => {
   });
 
   it('register rejects when user exists', async () => {
-    userModelMock.findOne.mockResolvedValue({ _id: 'u1' });
+    userModelMock.findOne.mockResolvedValue({ _id: 'u1' } as User);
 
     await expect(
       service.register({ name: 'n', email: 'a@b.c', password: 'secret' }),
@@ -68,7 +73,7 @@ describe('AuthService', () => {
   it('refresh token rejects invalid token', async () => {
     refreshTokenModelMock.findOne.mockReturnValue({
       populate: jest.fn().mockResolvedValue(null),
-    });
+    } as any);
 
     await expect(
       service.refreshToken({ refreshToken: 'bad' }),
@@ -82,7 +87,7 @@ describe('AuthService', () => {
       password: await bcrypt.hash('secret', 10),
       name: 'Name',
       role: 'participant',
-    };
+    } as unknown as User;
     userModelMock.findOne.mockResolvedValue(user);
 
     const result = await service.login({

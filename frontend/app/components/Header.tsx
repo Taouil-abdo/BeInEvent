@@ -16,27 +16,47 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
+    <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-white/75 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link
-          href="/"
-          className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white"
-        >
-          BeInEvent
+        <Link href="/" className="flex items-center gap-3">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[var(--color-ink)] text-sm font-semibold text-white">
+            BE
+          </span>
+          <span
+            className="text-lg font-semibold text-[var(--color-ink)]"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            BeInEvent
+          </span>
         </Link>
-        <nav className="flex items-center gap-4">
+
+        <nav className="flex items-center gap-3">
           {user ? (
             <>
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">
+              <span className="hidden items-center gap-2 rounded-full border border-[var(--color-border)] bg-white px-3 py-1 text-xs font-semibold text-[var(--color-ink)] sm:flex">
                 {user.name}
-                <span className="ml-1 rounded bg-zinc-200 px-1.5 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200">
+                <span className="rounded-full bg-[#f3eee6] px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--color-muted)]">
                   {user.role}
                 </span>
               </span>
+              {user.role === "admin" && (
+                <Link
+                  href="/admin"
+                  className="rounded-xl border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink)] transition hover:bg-[#f3eee6]"
+                >
+                  Admin
+                </Link>
+              )}
+              <Link
+                href="/reservations"
+                className="rounded-xl border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink)] transition hover:bg-[#f3eee6]"
+              >
+                Mes réservations
+              </Link>
               <button
                 type="button"
                 onClick={handleLogout}
-                className="rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+                className="rounded-xl bg-[var(--color-ink)] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
               >
                 Déconnexion
               </button>
@@ -45,15 +65,15 @@ export default function Header() {
             <>
               <Link
                 href="/login"
-                className="rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+                className="rounded-xl border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink)] transition hover:bg-[#f3eee6]"
               >
                 Connexion
               </Link>
               <Link
                 href="/register"
-                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="rounded-xl bg-[var(--color-ink)] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
               >
-                S&apos;inscrire
+                S'inscrire
               </Link>
             </>
           )}

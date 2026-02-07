@@ -8,22 +8,25 @@ import {
 import { ReservationsService } from './reservations.service';
 import { Reservation, ReservationStatus } from './reservations.schema';
 import { Event, EventStatus } from '../events/event.schema';
+import { Model } from 'mongoose';
 
 describe('ReservationsService', () => {
   let service: ReservationsService;
 
   const reservationSaveMock = jest.fn();
-  const reservationModelMock: any = jest.fn().mockImplementation(() => ({
+  const reservationModelMock = Object.assign(jest.fn(), {
+    findOne: jest.fn(),
+    countDocuments: jest.fn(),
+    findById: jest.fn(),
+    find: jest.fn(),
+  }) as unknown as jest.Mocked<Model<Reservation>>;
+  (reservationModelMock as unknown as jest.Mock).mockImplementation(() => ({
     save: reservationSaveMock,
   }));
-  reservationModelMock.findOne = jest.fn();
-  reservationModelMock.countDocuments = jest.fn();
-  reservationModelMock.findById = jest.fn();
-  reservationModelMock.find = jest.fn();
 
-  const eventModelMock: any = {
+  const eventModelMock = {
     findById: jest.fn(),
-  };
+  } as unknown as jest.Mocked<Model<Event>>;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -45,34 +48,36 @@ describe('ReservationsService', () => {
   });
 
   it('rejects reservation if event not found', async () => {
-    const execMock = jest.fn().mockResolvedValue(null);
-    eventModelMock.findById.mockReturnValue({ exec: execMock });
-    await expect(
-      service.create({ eventId: 'x' }, 'u1'),
-    ).rejects.toBeInstanceOf(NotFoundException);
+    const execMock = jest
+      .fn<Promise<Event | null>, []>()
+      .mockResolvedValue(null);
+    eventModelMock.findById.mockReturnValue({ exec: execMock } as any);
+    await expect(service.create({ eventId: 'x' }, 'u1')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 
   it('rejects reservation if event not published', async () => {
-    const execMock = jest.fn().mockResolvedValue({
+    const execMock = jest.fn<Promise<Event | null>, []>().mockResolvedValue({
       _id: 'e1',
       status: EventStatus.DRAFT,
-    });
-    eventModelMock.findById.mockReturnValue({ exec: execMock });
+    } as unknown as Event);
+    eventModelMock.findById.mockReturnValue({ exec: execMock } as any);
     await expect(
       service.create({ eventId: 'e1' }, 'u1'),
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
   it('rejects duplicate active reservation', async () => {
-    const execMock = jest.fn().mockResolvedValue({
+    const execMock = jest.fn<Promise<Event | null>, []>().mockResolvedValue({
       _id: 'e1',
       status: EventStatus.PUBLISHED,
       capacity: 10,
-    });
-    eventModelMock.findById.mockReturnValue({ exec: execMock });
+    } as unknown as Event);
+    eventModelMock.findById.mockReturnValue({ exec: execMock } as any);
     reservationModelMock.findOne.mockReturnValue({
       exec: jest.fn().mockResolvedValue({ _id: 'r1' }),
-    });
+    } as any);
 
     await expect(
       service.create({ eventId: 'e1' }, 'u1'),
@@ -80,15 +85,15 @@ describe('ReservationsService', () => {
   });
 
   it('rejects if event is full', async () => {
-    const execMock = jest.fn().mockResolvedValue({
+    const execMock = jest.fn<Promise<Event | null>, []>().mockResolvedValue({
       _id: 'e1',
       status: EventStatus.PUBLISHED,
       capacity: 1,
-    });
-    eventModelMock.findById.mockReturnValue({ exec: execMock });
+    } as unknown as Event);
+    eventModelMock.findById.mockReturnValue({ exec: execMock } as any);
     reservationModelMock.findOne.mockReturnValue({
       exec: jest.fn().mockResolvedValue(null),
-    });
+    } as any);
     reservationModelMock.countDocuments.mockResolvedValue(1);
 
     await expect(
@@ -97,12 +102,19 @@ describe('ReservationsService', () => {
   });
 
   it('creates reservation when rules pass', async () => {
-    const event = { _id: 'e1', status: EventStatus.PUBLISHED, capacity: 10 };
-    const execMock = jest.fn().mockResolvedValue(event);
-    eventModelMock.findById.mockReturnValue({ exec: execMock });
+    const eventId = 'e1';
+    const event = {
+      _id: eventId,
+      status: EventStatus.PUBLISHED,
+      capacity: 10,
+    } as unknown as Event;
+    const execMock = jest
+      .fn<Promise<Event | null>, []>()
+      .mockResolvedValue(event);
+    eventModelMock.findById.mockReturnValue({ exec: execMock } as any);
     reservationModelMock.findOne.mockReturnValue({
       exec: jest.fn().mockResolvedValue(null),
-    });
+    } as any);
     reservationModelMock.countDocuments.mockResolvedValue(0);
     reservationSaveMock.mockResolvedValue({ _id: 'r1' });
 
@@ -110,7 +122,7 @@ describe('ReservationsService', () => {
 
     expect(reservationModelMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        event: event._id,
+        event: eventId,
         participant: 'u1',
         status: ReservationStatus.PENDING,
       }),
@@ -125,8 +137,10 @@ describe('ReservationsService', () => {
       status: ReservationStatus.PENDING,
       save: jest.fn(),
     };
-    const execMock = jest.fn().mockResolvedValue(reservation);
-    reservationModelMock.findById.mockReturnValue({ exec: execMock });
+    const execMock = jest
+      .fn<Promise<Reservation | null>, []>()
+      .mockResolvedValue(reservation as unknown as Reservation);
+    reservationModelMock.findById.mockReturnValue({ exec: execMock } as any);
 
     const result = await service.cancelByParticipant('r1', 'u1');
 
@@ -135,12 +149,14 @@ describe('ReservationsService', () => {
   });
 
   it('participant cannot cancel others reservations', async () => {
-    const execMock = jest.fn().mockResolvedValue({
-      _id: 'r1',
-      participant: { toString: () => 'u2' },
-      status: ReservationStatus.PENDING,
-    });
-    reservationModelMock.findById.mockReturnValue({ exec: execMock });
+    const execMock = jest
+      .fn<Promise<Reservation | null>, []>()
+      .mockResolvedValue({
+        _id: 'r1',
+        participant: { toString: () => 'u2' },
+        status: ReservationStatus.PENDING,
+      } as unknown as Reservation);
+    reservationModelMock.findById.mockReturnValue({ exec: execMock } as any);
 
     await expect(
       service.cancelByParticipant('r1', 'u1'),
@@ -148,18 +164,22 @@ describe('ReservationsService', () => {
   });
 
   it('admin confirm enforces capacity', async () => {
-    const execMock = jest.fn().mockResolvedValue({
-      _id: 'r1',
-      status: ReservationStatus.PENDING,
-      event: 'e1',
-      save: jest.fn(),
-    });
-    reservationModelMock.findById.mockReturnValue({ exec: execMock });
-    const eventExecMock = jest.fn().mockResolvedValue({
-      _id: 'e1',
-      capacity: 1,
-    });
-    eventModelMock.findById.mockReturnValue({ exec: eventExecMock });
+    const execMock = jest
+      .fn<Promise<Reservation | null>, []>()
+      .mockResolvedValue({
+        _id: 'r1',
+        status: ReservationStatus.PENDING,
+        event: 'e1',
+        save: jest.fn(),
+      } as unknown as Reservation);
+    reservationModelMock.findById.mockReturnValue({ exec: execMock } as any);
+    const eventExecMock = jest
+      .fn<Promise<Event | null>, []>()
+      .mockResolvedValue({
+        _id: 'e1',
+        capacity: 1,
+      } as unknown as Event);
+    eventModelMock.findById.mockReturnValue({ exec: eventExecMock } as any);
     reservationModelMock.countDocuments.mockResolvedValue(1);
 
     await expect(

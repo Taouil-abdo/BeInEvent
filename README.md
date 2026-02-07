@@ -154,6 +154,10 @@ Build
 ❌ Pipeline fails if lint, tests, or build fails
 📦 Docker images are published to Docker Hub
 
+CI secrets (required for Docker publish):
+- DOCKERHUB_USERNAME
+- DOCKERHUB_TOKEN
+
 📅 Project Management
 Project planned and tracked using JIRA
 

@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { API_BASED_URL } from "../../../lib/api";
-import Header from "../../components/Header";
+import Link from "next/link";
+import ReservationActions from "./ReservationActions";
 
-type EventDetail = {
+type EventItem = {
   _id: string;
   title: string;
   description?: string;
@@ -10,12 +10,13 @@ type EventDetail = {
   location?: string;
   capacity: number;
   status: string;
-}
+  createdBy?: { name?: string; email?: string };
+};
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
   return d.toLocaleDateString("fr-FR", {
-    weekday: "long",
+    weekday: "short",
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -24,71 +25,128 @@ function formatDate(dateStr: string) {
   });
 }
 
-async function getEvent(id: string): Promise<EventDetail | null> {
+async function getEvent(
+  id: string,
+): Promise<{ event?: EventItem; error?: string }> {
   try {
     const res = await fetch(`${API_BASED_URL}/events/${id}`, {
       cache: "no-store",
     });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
+    if (!res.ok) {
+      throw new Error("Unable to load event");
+    }
+    const data = await res.json();
+    return { event: data };
+  } catch (e: any) {
+    return { error: e?.message || "Error while loading event" };
   }
 }
 
-export default async function EventPage({
+export default async function EventDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const event = await getEvent(id);
+  const { event, error } = await getEvent(id);
+
+  if (error) {
+    return (
+      <div className="app-shell">
+        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+          <div className="glass rounded-3xl p-10 text-center">
+            <p className="text-lg font-semibold text-[var(--color-ink)]">
+              {error}
+            </p>
+            <div className="mt-6">
+              <Link
+                href="/"
+                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-ink)] transition hover:bg-[#f3eee6]"
+              >
+                Retour aux événements
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!event) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-        <Header />
-        <main className="mx-auto max-w-2xl px-4 py-16">
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Événement introuvable.
-          </p>
-          <Link
-            href="/"
-            className="mt-4 inline-block text-sm font-medium text-zinc-900 underline dark:text-white"
-          >
-            Retour à l&apos;accueil
-          </Link>
-        </main>
+      <div className="app-shell">
+        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+          <div className="glass rounded-3xl p-10 text-center">
+            <p className="text-lg font-semibold text-[var(--color-ink)]">
+              Événement introuvable.
+            </p>
+            <div className="mt-6">
+              <Link
+                href="/"
+                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-ink)] transition hover:bg-[#f3eee6]"
+              >
+                Retour aux événements
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <Header />
-      <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+    <div className="app-shell">
+      <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
         <Link
           href="/"
-          className="mb-6 inline-block text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:underline"
+          className="text-sm font-semibold text-[var(--color-muted)] hover:text-[var(--color-ink)]"
         >
           ← Retour aux événements
         </Link>
-        <article className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-8">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white sm:text-3xl">
-            {event.title}
-          </h1>
-          <p className="mt-2 text-zinc-500 dark:text-zinc-400">
-            {formatDate(event.date)}
-            {event.location && ` · ${event.location}`}
-          </p>
-          <p className="mt-4 text-zinc-600 dark:text-zinc-300">
-            {event.description || "Aucune description."}
-          </p>
-          <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-500">
-            {event.capacity} place{event.capacity > 1 ? "s" : ""} disponibles
-          </p>
-        </article>
-      </main>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="glass rounded-3xl p-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="badge badge--accent">
+                {event.capacity} places
+              </span>
+              <span
+                className={`badge ${
+                  event.status === "PUBLISHED"
+                    ? "badge--ok"
+                    : event.status === "DRAFT"
+                      ? "badge--warn"
+                      : "badge--danger"
+                }`}
+              >
+                {event.status}
+              </span>
+            </div>
+            <h1
+              className="mt-4 text-3xl font-semibold tracking-tight text-[var(--color-ink)]"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {event.title}
+            </h1>
+            <p className="mt-2 text-sm text-[var(--color-muted)]">
+              {formatDate(event.date)}
+              {event.location ? ` · ${event.location}` : ""}
+            </p>
+            <p className="mt-6 text-base leading-relaxed text-[var(--color-muted)]">
+              {event.description || "Aucune description pour cet événement."}
+            </p>
+            {event.createdBy?.name && (
+              <p className="mt-6 text-sm text-[var(--color-muted)]">
+                Organisé par {event.createdBy.name}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <ReservationActions eventId={event._id} eventStatus={event.status} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

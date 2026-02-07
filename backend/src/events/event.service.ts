@@ -31,6 +31,10 @@ export class EventService {
       .exec();
   }
 
+  async findAllAdmin() {
+    return this.eventModel.find().populate('createdBy', 'name email').exec();
+  }
+
   async findOne(id: string) {
     const event = await this.eventModel
       .findById(id)
@@ -79,7 +83,13 @@ export class EventService {
     if (event.createdBy.toString() !== userId) {
       throw new ForbiddenException('You can only update your own events');
     }
-    const updateData: any = { ...updateEventDto };
+    const updateData = { ...updateEventDto } as {
+      date?: string | Date;
+      title?: string;
+      description?: string;
+      location?: string;
+      capacity?: number;
+    };
     if (updateData.date) {
       updateData.date = new Date(updateData.date);
     }

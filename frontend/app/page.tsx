@@ -62,7 +62,7 @@ function EventsSection({
     return (
       <section className="py-16" id="events">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <p className="text-center text-zinc-500 dark:text-zinc-400">
+          <p className="text-center text-[var(--color-muted)]">
             Aucun événement à venir pour le moment.
           </p>
         </div>
@@ -73,38 +73,42 @@ function EventsSection({
   return (
     <section className="py-16" id="events">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <h2 className="mb-10 text-center text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-          Prochains événements
-        </h2>
+        <div className="mb-10 text-center">
+          <h2 className="text-4xl font-semibold tracking-tight text-[var(--color-ink)]" style={{ fontFamily: "var(--font-display)" }}>
+            Prochains événements
+          </h2>
+          <p className="mt-3 text-[var(--color-muted)]">
+            Explorez notre sélection d'événements à venir
+          </p>
+        </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (
             <a
               key={event._id}
               href={`/events/${event._id}`}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:border-zinc-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white transition hover:-translate-y-1 hover:shadow-xl"
             >
-              <div className="flex h-32 items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-700">
-                <span className="text-4xl font-bold text-zinc-300 dark:text-zinc-500">
-                  {event.title.charAt(0)}
-                </span>
+              <div className="flex h-32 items-center justify-between bg-[#f4efe7] px-5">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-[var(--color-muted)]">
+                    {event.location || "Lieu à confirmer"}
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-[var(--color-ink)]">
+                    {formatDate(event.date)}
+                  </p>
+                </div>
+                <span className="badge badge--accent">{event.capacity} places</span>
               </div>
               <div className="flex flex-1 flex-col p-5">
-                <h3 className="mb-1 font-semibold text-zinc-900 group-hover:text-zinc-700 dark:text-white dark:group-hover:text-zinc-200">
+                <h3 className="text-lg font-semibold text-[var(--color-ink)] group-hover:text-[var(--color-accent)]">
                   {event.title}
                 </h3>
-                <p className="mb-2 line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">
-                  {event.description || "Aucune description."}
+                <p className="mt-2 line-clamp-2 text-sm text-[var(--color-muted)]">
+                  {event.description || "Aucune description disponible."}
                 </p>
-                <p className="mt-auto text-xs text-zinc-500 dark:text-zinc-500">
-                  {formatDate(event.date)}
-                  {event.location && ` · ${event.location}`}
-                </p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-500">
-                  {event.capacity} place{event.capacity > 1 ? "s" : ""}
-                </p>
-                <span className="mt-3 inline-block text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  Voir l&apos;événement →
-                </span>
+                <div className="mt-auto pt-4 text-sm font-medium text-[var(--color-ink)]">
+                  Voir les détails →
+                </div>
               </div>
             </a>
           ))}
@@ -118,31 +122,94 @@ export default async function Home() {
   const { events, error } = await getEvents();
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="app-shell">
       <Header />
       <main>
-        {/* Hero */}
-        <section className="relative overflow-hidden border-b border-zinc-200 bg-gradient-to-b from-white to-zinc-50 dark:border-zinc-800 dark:from-zinc-950 dark:to-zinc-900">
-          <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
-            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-5xl">
-              BeInEvent
-            </h1>
-            <p className="mt-4 max-w-xl text-lg text-zinc-600 dark:text-zinc-400">
-              Découvrez et réservez votre place aux prochains événements :
-              formations, ateliers, conférences et plus encore.
-            </p>
-            <a
-              href="#events"
-              className="mt-8 inline-block rounded-xl bg-zinc-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-            >
-              Voir les événements
-            </a>
+        <section className="relative overflow-hidden">
+          <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+            <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/80 px-4 py-1.5 text-sm font-medium text-[var(--color-muted)]">
+                  <span className="h-2 w-2 rounded-full bg-[var(--color-accent)]"></span>
+                  Plateforme de réservation d'événements
+                </div>
+                <h1 className="mt-6 text-5xl font-semibold leading-[1.05] tracking-tight text-[var(--color-ink)] sm:text-6xl" style={{ fontFamily: "var(--font-display)" }}>
+                  BeInEvent
+                </h1>
+                <p className="mt-6 max-w-2xl text-lg leading-relaxed text-[var(--color-muted)]">
+                  Découvrez et réservez votre place aux prochains événements :
+                  formations, ateliers, conférences et bien plus encore.
+                </p>
+                <div className="mt-8 flex flex-wrap gap-4">
+                  <a
+                    href="#events"
+                    className="rounded-xl bg-[var(--color-ink)] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:opacity-90"
+                  >
+                    Voir les événements
+                  </a>
+                  <a
+                    href="/register"
+                    className="rounded-xl border border-[var(--color-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--color-ink)] transition hover:bg-[#f3eee6]"
+                  >
+                    Créer un compte
+                  </a>
+                </div>
+              </div>
+              <div className="glass rounded-3xl p-6">
+                <div className="grid gap-4">
+                  <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4">
+                    <p className="text-xs uppercase tracking-wide text-[var(--color-muted)]">À venir</p>
+                    <p className="mt-2 text-lg font-semibold">Atelier UX Research</p>
+                    <p className="mt-1 text-sm text-[var(--color-muted)]">Mar 12 · Casablanca</p>
+                  </div>
+                  <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4">
+                    <p className="text-xs uppercase tracking-wide text-[var(--color-muted)]">Bientôt complet</p>
+                    <p className="mt-2 text-lg font-semibold">Conférence IA</p>
+                    <p className="mt-1 text-sm text-[var(--color-muted)]">Apr 02 · Rabat</p>
+                  </div>
+                  <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4">
+                    <p className="text-xs uppercase tracking-wide text-[var(--color-muted)]">Nouveau</p>
+                    <p className="mt-2 text-lg font-semibold">Formation NestJS</p>
+                    <p className="mt-1 text-sm text-[var(--color-muted)]">Apr 20 · Online</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Liste des événements (SSR) */}
         <EventsSection events={events} error={error} />
       </main>
+
+      <footer className="border-t border-[var(--color-border)] bg-white/70">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+            <p className="text-sm text-[var(--color-muted)]">
+              © 2026 BeInEvent. Tous droits réservés.
+            </p>
+            <div className="flex gap-6">
+              <a
+                href="#"
+                className="text-sm text-[var(--color-muted)] transition hover:text-[var(--color-ink)]"
+              >
+                À propos
+              </a>
+              <a
+                href="#"
+                className="text-sm text-[var(--color-muted)] transition hover:text-[var(--color-ink)]"
+              >
+                Contact
+              </a>
+              <a
+                href="#"
+                className="text-sm text-[var(--color-muted)] transition hover:text-[var(--color-ink)]"
+              >
+                Confidentialité
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

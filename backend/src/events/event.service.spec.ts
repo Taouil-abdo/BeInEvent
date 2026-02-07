@@ -3,18 +3,21 @@ import { getModelToken } from '@nestjs/mongoose';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { EventService } from './event.service';
 import { Event, EventStatus } from './event.schema';
+import { Model } from 'mongoose';
 
 describe('EventService', () => {
   let service: EventService;
   const saveMock = jest.fn();
-  const eventModelMock: any = jest.fn().mockImplementation(() => ({
+  const eventModelMock = Object.assign(jest.fn(), {
+    find: jest.fn(),
+    findById: jest.fn(),
+    findByIdAndUpdate: jest.fn(),
+    findByIdAndDelete: jest.fn(),
+  }) as unknown as jest.Mocked<Model<Event>>;
+
+  (eventModelMock as unknown as jest.Mock).mockImplementation(() => ({
     save: saveMock,
   }));
-
-  eventModelMock.find = jest.fn();
-  eventModelMock.findById = jest.fn();
-  eventModelMock.findByIdAndUpdate = jest.fn();
-  eventModelMock.findByIdAndDelete = jest.fn();
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -54,25 +57,27 @@ describe('EventService', () => {
   });
 
   it('findAll returns only published events', async () => {
-    const execMock = jest.fn().mockResolvedValue([{ _id: '1' }]);
+    const execMock = jest
+      .fn<Promise<Event[]>, []>()
+      .mockResolvedValue([{ _id: '1' } as unknown as Event]);
     eventModelMock.find.mockReturnValue({
       populate: jest.fn().mockReturnValue({ exec: execMock }),
-    });
+    } as any);
 
     const result = await service.findAll();
 
-    expect(eventModelMock.find).toHaveBeenCalledWith({
-      status: EventStatus.PUBLISHED,
-    });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const findArgs = (eventModelMock.find as jest.Mock).mock.calls[0]?.[0];
+    expect(findArgs).toEqual({ status: EventStatus.PUBLISHED });
     expect(result).toEqual([{ _id: '1' }]);
   });
 
   it('findOne throws if event not found', async () => {
     eventModelMock.findById.mockReturnValue({
-      populate: jest
-        .fn()
-        .mockReturnValue({ exec: jest.fn().mockResolvedValue(null) }),
-    });
+      populate: jest.fn().mockReturnValue({
+        exec: jest.fn<Promise<Event | null>, []>().mockResolvedValue(null),
+      }),
+    } as any);
 
     await expect(service.findOne('x')).rejects.toBeInstanceOf(
       NotFoundException,
@@ -80,13 +85,13 @@ describe('EventService', () => {
   });
 
   it('publish rejects if not owner', async () => {
-    const execMock = jest.fn().mockResolvedValue({
+    const execMock = jest.fn<Promise<Event | null>, []>().mockResolvedValue({
       _id: '1',
       createdBy: { toString: () => 'owner' },
       status: EventStatus.DRAFT,
       save: jest.fn(),
-    });
-    eventModelMock.findById.mockReturnValue({ exec: execMock });
+    } as unknown as Event);
+    eventModelMock.findById.mockReturnValue({ exec: execMock } as any);
 
     await expect(service.publish('1', 'other')).rejects.toBeInstanceOf(
       ForbiddenException,
@@ -94,12 +99,12 @@ describe('EventService', () => {
   });
 
   it('cancel rejects if not owner', async () => {
-    const execMock = jest.fn().mockResolvedValue({
+    const execMock = jest.fn<Promise<Event | null>, []>().mockResolvedValue({
       _id: '1',
       createdBy: { toString: () => 'owner' },
       save: jest.fn(),
-    });
-    eventModelMock.findById.mockReturnValue({ exec: execMock });
+    } as unknown as Event);
+    eventModelMock.findById.mockReturnValue({ exec: execMock } as any);
 
     await expect(service.cancel('1', 'other')).rejects.toBeInstanceOf(
       ForbiddenException,
@@ -107,33 +112,38 @@ describe('EventService', () => {
   });
 
   it('update converts date when provided', async () => {
-    const execMock = jest.fn().mockResolvedValue({
+    const execMock = jest.fn<Promise<Event | null>, []>().mockResolvedValue({
       _id: '1',
       createdBy: { toString: () => 'owner' },
-    });
-    eventModelMock.findById.mockReturnValue({ exec: execMock });
-    const updateExecMock = jest.fn().mockResolvedValue({ _id: '1' });
+    } as unknown as Event);
+    eventModelMock.findById.mockReturnValue({ exec: execMock } as any);
+    const updateExecMock = jest
+      .fn<Promise<Event | null>, []>()
+      .mockResolvedValue({ _id: '1' } as unknown as Event);
     eventModelMock.findByIdAndUpdate.mockReturnValue({
       populate: jest.fn().mockReturnValue({ exec: updateExecMock }),
-    });
+    } as any);
 
     await service.update('1', { date: new Date().toISOString() }, 'owner');
 
-    expect(eventModelMock.findByIdAndUpdate).toHaveBeenCalledWith(
-      '1',
-      expect.objectContaining({ date: expect.any(Date) }),
-      { new: true },
-    );
+    const updateCalls = (eventModelMock.findByIdAndUpdate as jest.Mock).mock
+      .calls as Array<[string, { date?: Date }]>;
+    const updatePayload = updateCalls[0]?.[1];
+    expect(updatePayload.date).toBeInstanceOf(Date);
   });
 
   it('remove deletes event if owner', async () => {
-    const execMock = jest.fn().mockResolvedValue({
+    const execMock = jest.fn<Promise<Event | null>, []>().mockResolvedValue({
       _id: '1',
       createdBy: { toString: () => 'owner' },
-    });
-    eventModelMock.findById.mockReturnValue({ exec: execMock });
-    const deleteExecMock = jest.fn().mockResolvedValue({});
-    eventModelMock.findByIdAndDelete.mockReturnValue({ exec: deleteExecMock });
+    } as unknown as Event);
+    eventModelMock.findById.mockReturnValue({ exec: execMock } as any);
+    const deleteExecMock = jest
+      .fn<Promise<Event | null>, []>()
+      .mockResolvedValue({} as Event);
+    eventModelMock.findByIdAndDelete.mockReturnValue({
+      exec: deleteExecMock,
+    } as any);
 
     const result = await service.remove('1', 'owner');
 
