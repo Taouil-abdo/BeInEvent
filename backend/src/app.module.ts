@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { EventModule } from './events/event.module';
 import { getDatabaseConfig } from './config/database.config';
+import { ReservationsModule } from './reservations/reservations.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { getDatabaseConfig } from './config/database.config';
     AuthModule,
     UsersModule,
     EventModule,
+    ReservationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
